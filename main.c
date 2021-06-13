@@ -1,4 +1,4 @@
-/ C program for the implementation of
+//C program for the implementation of
 // menu driven program for student
 // management system
 #include <math.h>
