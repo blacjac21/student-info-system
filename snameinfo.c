@@ -1,107 +1,305 @@
-                // Function to search the students list by the given first name
-
-void find_fn()
+#include<stdio.h>
+#include<conio.h>
+#include<stdlib.h>
+#include<windows.h>
+#include<string.h>
+void gotoxy(int ,int );
+void menu();
+void add();
+void view();
+void search();
+void modify();
+void deleterec();
+struct student
 {
-	char a[50];
-	printf("Enter the First Name" of the student\n");
-	a = "Rahul";
-	int c = 0;
+    char name[20];
+    char CGPA[10];
+    int rollno;
+    char course[20];
+    char branch[20];
+};
+int main()
+{
+    gotoxy(15,8);
+    printf("<--:Student Record Management System:-->");
+    gotoxy(19,15);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+    return 0;
+}
+void menu()
+{
+    int choice;
+    system("cls");
+    gotoxy(10,3);
+    printf("<--:MENU:-->");
+    gotoxy(10,5);
+    printf("Enter appropriate number to perform following task.");
+    gotoxy(10,7);
+    printf("1 : Add Record.");
+    gotoxy(10,8);
+    printf("2 : View Record.");
+    gotoxy(10,9);
+    printf("3 : Search Record.");
+    gotoxy(10,10);
+    printf("4 : Modify Record.");
+    gotoxy(10,11);
+    printf("5 : Delete.");
+    gotoxy(10,12);
+    printf("6 : Exit.");
+    gotoxy(10,15);
+    printf("Enter your choice.");
+    scanf("%d",&choice);
+    switch(choice)
+    {
+    case 1:
+        add();
+        break;
 
-	// Iterating through the students list
-	for (int j = 0; j <= i; j++) 
-	{
-		// Compare the first names
-		if (!strcmp(st[j].fname, a)) 
-    	{
-			printf("The Students Details are\n");
-			printf("The First name is %s\n",st[j].fname);
-			printf("The Last name is %s\n",st[j].lname);
-			printf("The Roll Number is %d\n ",st[j].roll);
-			print("The CGPA is %f\n",st[j].cgpa);
-			printf("Enter the course ID of each course\n");
+    case 2:
+        view();
+        break;
 
-			// Print the course ID's
-			for (int k = 0; k < 5; k++) 
-      		{
-				printf("The course ID are %d\n",st[j].cid[k]);
-			}
-			c = 1;
-		}
-	}
+    case 3:
+        search();
+        break;
+
+    case 4:
+        modify();
+        break;
+
+    case 5:
+        deleterec();
+        break;
+
+    case 6:
+        exit(1);
+        break;
+
+    default:
+        gotoxy(10,17);
+        printf("Invalid Choice.");
+    }
+}
+void add()
+{
+    FILE *fp;
+    struct student std;
+    char another ='y';
+    system("cls");
+
+    fp = fopen("record.txt","ab+");
+    if(fp == NULL){
+        gotoxy(10,5);
+        printf("Error opening file");
+        exit(1);
+    }
+    fflush(stdin);
+    while(another == 'y')
+    {
+        gotoxy(10,3);
+        printf("<--:ADD RECORD:-->");
+        gotoxy(10,5);
+        printf("Enter details of student.");
+        gotoxy(10,7);
+        printf("Enter Name : ");
+//        gets(std.name);///???
+        gets(std.name);
+        gotoxy(10,8);
+        printf("Enter CGPA : ");
+        gets(std.CGPA);
+        gotoxy(10,9);
+        printf("Enter Roll No : ");
+        scanf("%d",&std.rollno);
+        fflush(stdin);
+        gotoxy(10,10);
+        printf("Enter Course : ");
+//        gets(std.course);///???
+        gets(std.course);
+        gotoxy(10,11);
+        printf("Enter Branch : ");
+        gets(std.branch);
+//        gotoxy(10,12);
+//        printf("Enter Father's Name : ");
+//        gets(std.fathername);
+        fwrite(&std,sizeof(std),1,fp);
+        gotoxy(10,15);
+        printf("Want to add another record? Then press 'y' else 'n'.");
+        fflush(stdin);
+//        another = getch();///???
+        another = getch();
+        system("cls");
+        fflush(stdin);
+    }
+    fclose(fp);
+    gotoxy(10,18);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+}
+void view()
+{
+    FILE *fp;
+    int i=1,j;
+    struct student std;
+    system("cls");
+    gotoxy(10,3);
+    printf("<--:VIEW RECORD:-->");
+    gotoxy(10,5);
+    printf("S.No   Name of Student       CGPA      Roll No  Course      Branch");
+    gotoxy(10,6);
+    printf("--------------------------------------------------------------------");
+    fp = fopen("record.txt","rb+");
+    if(fp == NULL){
+        gotoxy(10,8);
+        printf("Error opening file.");
+        exit(1);
+    }
+    j=8;
+    while(fread(&std,sizeof(std),1,fp) == 1){
+        gotoxy(10,j);
+        printf("%-7d%-22s%-12s%-9d%-12s%-12s",i,std.name,std.CGPA,std.rollno,std.course,std.branch);
+        i++;
+        j++;
+    }
+    fclose(fp);
+    gotoxy(10,j+3);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+}
+void search()
+{
+    FILE *fp;
+    struct student std;
+    char stname[20];
+    system("cls");
+    gotoxy(10,3);
+    printf("<--:SEARCH RECORD:-->");
+    gotoxy(10,5);
+    printf("Enter name of student : ");
+    fflush(stdin);
+    gets(stname);
+    fp = fopen("record.txt","rb+");
+    if(fp == NULL){
+        gotoxy(10,6);
+        printf("Error opening file");
+        exit(1);
+    }
+    while(fread(&std,sizeof(std),1,fp ) == 1){
+        if(strcmp(stname,std.name) == 0){
+            gotoxy(10,8);
+            printf("Name : %s",std.name);
+            gotoxy(10,9);
+            printf("Mobile Number : %s",std.CGPA);
+            gotoxy(10,10);
+            printf("Roll No : %d",std.rollno);
+            gotoxy(10,11);
+            printf("Course : %s",std.course);
+            gotoxy(10,12);
+            printf("Branch : %s",std.branch);
+        }
+    }
+    fclose(fp);
+    gotoxy(10,16);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+}
+void modify()
+{
+    char stname[20];
+    FILE *fp;
+    struct student std;
+    system("cls");
+    gotoxy(10,3);
+    printf("<--:MODIFY RECORD:-->");
+    gotoxy(10,5);
+    printf("Enter name of student to modify: ");
+    fflush(stdin);
+    gets(stname);
+    fp = fopen("record.txt","rb+");
+    if(fp == NULL){
+        gotoxy(10,6);
+        printf("Error opening file");
+        exit(1);
+    }
+    rewind(fp);
+    fflush(stdin);
+    while(fread(&std,sizeof(std),1,fp) == 1)
+    {
+        if(strcmp(stname,std.name) == 0){
+            gotoxy(10,7);
+            printf("Enter name: ");
+            gets(std.name);
+            gotoxy(10,8);
+            printf("Enter CGPA : ");
+            gets(std.CGPA);
+            gotoxy(10,9);
+            printf("Enter roll no : ");
+            scanf("%d",&std.rollno);
+            gotoxy(10,10);
+            printf("Enter Course : ");
+            fflush(stdin);
+            gets(std.course);
+            gotoxy(10,11);
+            printf("Enter Branch : ");
+            fflush(stdin);
+            gets(std.branch);
+            fseek(fp ,-sizeof(std),SEEK_CUR);
+            fwrite(&std,sizeof(std),1,fp);
+            break;
+        }
+    }
+    fclose(fp);
+    gotoxy(10,16);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+}
+void deleterec()
+{
+    char stname[20];
+    FILE *fp,*ft;
+    struct student std;
+    system("cls");
+    gotoxy(10,3);
+    printf("<--:DELETE RECORD:-->");
+    gotoxy(10,5);
+    printf("Enter name of student to delete record : ");
+    fflush(stdin);
+    gets(stname);
+    fp = fopen("record.txt","rb+");
+    if(fp == NULL){
+        gotoxy(10,6);
+        printf("Error opening file");
+        exit(1);
+    }
+    ft = fopen("temp.txt","wb+");
+    if(ft == NULL){
+        gotoxy(10,6);
+        printf("Error opening file");
+        exit(1);
+    }
+    while(fread(&std,sizeof(std),1,fp) == 1){
+        if(strcmp(stname,std.name)!=0)
+            fwrite(&std,sizeof(std),1,ft);
+    }
+    fclose(fp);
+    fclose(ft);
+    remove("record.txt");
+    rename("temp.txt","record.txt");
+    gotoxy(10,10);
+    printf("Press any key to continue.");
+    getch();
+    menu();
+}
+void gotoxy(int x,int y)
+{
+        COORD c;
+        c.X=x;
+        c.Y=y;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),c);
 }
 
-	       
-	       
-	       // Function to delete a student by the roll number
-               
-void del_s()
-{
-	int a;
-	printf("Enter the Roll Number"
-		" which you want to delete\n");
-	a = 1;
-
-	// Iterating through the list and
-	// find the student with the given
-	// roll number
-	for (int j = 0; j <= i; j++) {
-		if (a == st[j].roll) {
-			for (int k = j; k < 49; k++)
-				st[k] = st[k + 1];
-			i--;
-		}
-	}
-	printf("The Roll Number is "
-		"removed Successfully\n");
-}
-
-	       
-	       // Function to update the details of the student
-void up_s()
-{
-
-	printf("Enter the roll number to update the entry: ");
-	long int x;
-	x = 1;
-	for (int j = 0; j < i; j++) 
-	{
-		if (st[j].roll == x) 
-		{
-			printf( "1. first name\n"
-			        "2. last name\n"
-                                "3. roll no.\n"
-		                "4. CGPA\n"
-				"5. courses\n");
-			int z;
-
-			// Updating the CGPA
-			z = 4;
-			switch (z) 
-                        {
-			case 1:
-				printf("Enter the new first name : \n");
-				scanf("%s", st[j].fname);
-				break;
-			case 2:
-				printf("Enter the new last name : \n");
-				scanf("%s", st[j].lname);
-				break;
-			case 3:
-				printf("Enter the new roll number : \n");
-				scanf("%d", &st[j].roll);
-				break;
-			case 4:
-				printf("Enter the new CGPA : \n");
-				st[j].cgpa = 9;
-				break;
-			case 5:
-				printf("Enter the new courses \n");
-				scanf("%d%d%d%d%d", &st[j].cid[0],
-					&st[j].cid[1], &st[j].cid[2],
-					&st[j].cid[3], &st[j].cid[4]);
-				break;
-			}
-			printf("UPDATED SUCCESSFULLY.\n");
-		}
-	}
-}
