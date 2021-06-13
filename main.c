@@ -8,7 +8,7 @@ Date: 24/1/15 23:39
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
-#include<conio.h>
+#include<curses.h>
 /* function deslaration start*/
 	void add();
 	void display();					
