@@ -1,304 +1,203 @@
-#include<stdio.h>
-#include<curses.h>
-#include<stdlib.h>
-#include<windows.h>
-#include<string.h>
-void gotoxy(int ,int );
-void menu();
-void add();
-void view();
-void search();
-void modify();
-void deleterec();
-struct student
+/* BASIC STUDENT INFORMATION SYSTEM 1.0
+ * ================================================================================
+ * Pelin Öztürk & Mehmet Akif Tütüncü
+ * ================================================================================
+ * This project has been compiled with GNOME Compiler Collection under Ubuntu 11.04
+ * ================================================================================
+ * Main File
+ * ================================================================================
+ */
+
+// ===== Header files =====
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "macros.h"					// There are predefined macros and language strings in this header file
+#include "types.h"					// There are definitions for some necessary types
+// ================================================================================
+
+// ===== Global variables =====
+BINARYTREE *students;
+// ================================================================================
+
+// ===== General functions =====
+void flushInput()					// This function is to prevent the application from buffer errors during user input through terminal
 {
-    char name[20];
-    char mobile[10];
-    int rollno;
-    char course[20];
-    char branch[20];
-};
+	int c = 999;
+	while (c != '\n' && c != EOF)
+	{
+		c = getchar();
+	}
+}
+
+void changeCaseToUpper(char *s)
+{
+	int i;
+	for(i = 0; *(s + i); i++)							// Move through each character on the string
+	{
+		*(s + i) = toupper(*(s + i));					// Replace each character with it's uppercase
+	}
+}
+// ================================================================================
+
+// ===== Student creation functions =====
+void addCourseToStudent(STUDENT *student)
+{
+	COURSE *newCourse = (COURSE *) malloc(sizeof(COURSE));
+	
+	printf("\n%s: ", LANGUAGE_ADDCOURSETOSTUDENT_CODE);
+	fgets(newCourse->code, 16, stdin);
+	newCourse->code[strlen(newCourse->code) - 1] = '\0';
+	
+	changeCaseToUpper(newCourse->code);
+
+	printf("%s: ", LANGUAGE_ADDCOURSETOSTUDENT_NAME);
+	fgets(newCourse->name, NAMELENGHT, stdin);
+	newCourse->name[strlen(newCourse->name) - 1] = '\0';
+	
+	changeCaseToUpper(newCourse->name);
+	
+	printf("%s: ", LANGUAGE_ADDCOURSETOSTUDENT_GRADE);
+	fgets(newCourse->grade, 4, stdin);
+	newCourse->grade[strlen(newCourse->grade) - 1] = '\0';
+	
+	changeCaseToUpper(newCourse->grade);
+
+	printf("%s: ", LANGUAGE_ADDCOURSETOSTUDENT_ABSENTEEISM);
+	scanf("%d", &(newCourse->absenteeism));
+	flushInput();
+	
+	NODE *newNode = createNode();
+	newNode->data = (COURSE *) newCourse;
+	addToBackLinkedList(student->courses, newNode);
+	
+	printf("\n%s \"(%s) %s - %s - %d\" %s!\n", LANGUAGE_ADDCOURSETOSTUDENT_RESULT1, newCourse->code, newCourse->name, newCourse->grade, newCourse->absenteeism, LANGUAGE_ADDCOURSETOSTUDENT_RESULT2);
+}
+
+void createAStudent()
+{
+	printf("\n%s\n", LANGUAGE_TITLE_CREATEASTUDENT);
+	printf("==================================================\n");
+	
+	STUDENT *newStudent = (STUDENT *) malloc(sizeof(STUDENT));
+	newStudent->courses = createLinkedList();											// Create the linked list structure to hold courses of the new student
+	
+	printf("%s: ", LANGUAGE_CREATEASTUDENT_NAME);
+	fgets(newStudent->name, NAMELENGHT, stdin);
+	newStudent->name[strlen(newStudent->name) - 1] = '\0';								// This line is to fix the name, normally after fgets function the name has an unnecessary '\n' character at the end (I obtained it by using strlen() - 1), this line replaces that with a '\0'
+	
+	printf("%s: ", LANGUAGE_CREATEASTUDENT_NUMBER);
+	scanf("%d", &(newStudent->number));
+	flushInput();
+	
+	char selection;																		// Variable to hold selection
+	while(1)																			// Start an infinite loop to check the answer to the question
+	{
+		printf("\n%s: ", LANGUAGE_CREATEASTUDENT_COURSE);
+		scanf("%c", &selection);														// Read a character as selecction
+		flushInput();																	// Prevent input errors
+		if(selection == LANGUAGE_ANSWER_POSITIVEUPPER || selection == LANGUAGE_ANSWER_POSITIVELOWER)
+		{
+			addCourseToStudent(newStudent);												// Call course addition function
+		}
+		else if(selection == LANGUAGE_ANSWER_NEGATIVEUPPER || selection == LANGUAGE_ANSWER_NEGATIVELOWER)
+		{
+			break;																		// Break the infinite loop, so that creating process carries on
+		}
+		else
+		{
+			printf("\n==================================================\n");
+			printf("%s!\n", LANGUAGE_INPUTERROR);
+			printf("==================================================\n");
+		}
+	}
+	
+	BINARYNODE *newNode = createBinaryNode();											// Create a binary node as a student item for AVL tree
+	newNode->data = (STUDENT *) newStudent;												// After creating the node, set the data to the newStudent variable
+	insertAVL(students, newNode);														// Add the new student node to the students AVL tree
+	
+	printf("\n%s \"%s-%d\" %s!", LANGUAGE_CREATEASTUDENT_RESULT1, newStudent->name, newStudent->number, LANGUAGE_CREATEASTUDENT_RESULT2);
+}
+// ================================================================================
+
+// ===== Print all students to screen functions =====
+void printStudentToScreen(void *student)
+{
+	printf("%s - %d\n", ((STUDENT *)student)->name, ((STUDENT *)student)->number);
+	if(((STUDENT *)student)->courses->count > 0)
+	{
+		NODE *temp = ((STUDENT *)student)->courses->front;
+		while(temp)
+		{
+			printf("\t(%s) %s | %s | %d\n\n", ((COURSE *) temp->data)->code, ((COURSE *) temp->data)->name, ((COURSE *) temp->data)->grade, ((COURSE *) temp->data)->absenteeism);
+			temp = temp->next;
+		}
+	}
+}
+
+void printAllStudentsToScreen()
+{
+	printf("\n%s\n", LANGUAGE_TITLE_PRINTALLSTUDENTSTOSCREEN);
+	printf("==================================================\n");
+	
+	if(students->count <= 0)											// If there is no student in the AVL tree
+	{
+		printf("%s!\n", LANGUAGE_PRINTALLSTUDENTSTOSCREEN_ERROR);
+	}
+	else
+	{
+		traverseAVL(students, printStudentToScreen, 2);
+	}
+}
+// ================================================================================
+
+// ===== Menu functions =====
+void printMainMenu()
+{
+	printf("\n%s %d.%d | %s\n", LANGUAGE_TITLE_MAINMENUBSIS, MAJORVERSION, MINORVERSION, LANGUAGE_TITLE_MAINMENU);
+	printf("==================================================\n");
+	printf("1- %s\n", LANGUAGE_MAINMENU_OPTION1);
+	printf("2- %s\n", LANGUAGE_MAINMENU_OPTION2);
+	printf("3- %s\n\n", LANGUAGE_MAINMENU_OPTION3);
+	printf("%s: ", LANGUAGE_MAINMENU_CHOICE);
+}
+
+int evaluateMainMenu()
+{
+	char selection;																// Variable to hold the selection
+	scanf("%c", &selection);													// Read a character as selecction
+	flushInput();																// Prevent input errors
+	switch(selection)															// Check the selection and direct user to neccesary function
+	{
+		case '1'	: createAStudent();				break;
+		case '2'	: printAllStudentsToScreen();	break;
+		case '3'	: exit(0);													// User wanted to exit, exit the application, so the infinite loop in main function is over
+		default		:															// User entered something that was not one of the possible options, show error and to indicate that there was an error return -1 to main function
+			printf("\n==================================================\n");
+			printf("%s!\n", LANGUAGE_INPUTERROR);
+			printf("==================================================\n");
+			printMainMenu();													// Print the main menu again
+			return -1;
+	}
+}
+// ================================================================================
+
+// ===== Main function =====
 int main()
 {
-    gotoxy(15,8);
-    printf("<--:Student Record Management System:-->");
-    gotoxy(19,15);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-    return 0;
-}
-void menu()
-{
-    int choice;
-    system("cls");
-    gotoxy(10,3);
-    printf("<--:MENU:-->");
-    gotoxy(10,5);
-    printf("Enter appropriate number to perform following task.");
-    gotoxy(10,7);
-    printf("1 : Add Record.");
-    gotoxy(10,8);
-    printf("2 : View Record.");
-    gotoxy(10,9);
-    printf("3 : Search Record.");
-    gotoxy(10,10);
-    printf("4 : Modify Record.");
-    gotoxy(10,11);
-    printf("5 : Delete.");
-    gotoxy(10,12);
-    printf("6 : Exit.");
-    gotoxy(10,15);
-    printf("Enter your choice.");
-    scanf("%d",&choice);
-    switch(choice)
-    {
-    case 1:
-        add();
-        break;
-
-    case 2:
-        view();
-        break;
-
-    case 3:
-        search();
-        break;
-
-    case 4:
-        modify();
-        break;
-
-    case 5:
-        deleterec();
-        break;
-
-    case 6:
-        exit(1);
-        break;
-
-    default:
-        gotoxy(10,17);
-        printf("Invalid Choice.");
-    }
-}
-void add()
-{
-    FILE *fp;
-    struct student std;
-    char another ='y';
-    system("cls");
-
-    fp = fopen("record.txt","ab+");
-    if(fp == NULL){
-        gotoxy(10,5);
-        printf("Error opening file");
-        exit(1);
-    }
-    fflush(stdin);
-    while(another == 'y')
-    {
-        gotoxy(10,3);
-        printf("<--:ADD RECORD:-->");
-        gotoxy(10,5);
-        printf("Enter details of student.");
-        gotoxy(10,7);
-        printf("Enter Name : ");
-//        gets(std.name);///???
-        gets(std.name);
-        gotoxy(10,8);
-        printf("Enter Mobile Number : ");
-        gets(std.mobile);
-        gotoxy(10,9);
-        printf("Enter Roll No : ");
-        scanf("%d",&std.rollno);
-        fflush(stdin);
-        gotoxy(10,10);
-        printf("Enter Course : ");
-//        gets(std.course);///???
-        gets(std.course);
-        gotoxy(10,11);
-        printf("Enter Branch : ");
-        gets(std.branch);
-//        gotoxy(10,12);
-//        printf("Enter Father's Name : ");
-//        gets(std.fathername);
-        fwrite(&std,sizeof(std),1,fp);
-        gotoxy(10,15);
-        printf("Want to add of another record? Then press 'y' else 'n'.");
-        fflush(stdin);
-//        another = getch();///???
-        another = getch();
-        system("cls");
-        fflush(stdin);
-    }
-    fclose(fp);
-    gotoxy(10,18);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-}
-void view()
-{
-    FILE *fp;
-    int i=1,j;
-    struct student std;
-    system("cls");
-    gotoxy(10,3);
-    printf("<--:VIEW RECORD:-->");
-    gotoxy(10,5);
-    printf("S.No   Name of Student       Mobile No   Roll No  Course      Branch");
-    gotoxy(10,6);
-    printf("--------------------------------------------------------------------");
-    fp = fopen("record.txt","rb+");
-    if(fp == NULL){
-        gotoxy(10,8);
-        printf("Error opening file.");
-        exit(1);
-    }
-    j=8;
-    while(fread(&std,sizeof(std),1,fp) == 1){
-        gotoxy(10,j);
-        printf("%-7d%-22s%-12s%-9d%-12s%-12s",i,std.name,std.mobile,std.rollno,std.course,std.branch);
-        i++;
-        j++;
-    }
-    fclose(fp);
-    gotoxy(10,j+3);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-}
-void search()
-{
-    FILE *fp;
-    struct student std;
-    char stname[20];
-    system("cls");
-    gotoxy(10,3);
-    printf("<--:SEARCH RECORD:-->");
-    gotoxy(10,5);
-    printf("Enter name of student : ");
-    fflush(stdin);
-    gets(stname);
-    fp = fopen("record.txt","rb+");
-    if(fp == NULL){
-        gotoxy(10,6);
-        printf("Error opening file");
-        exit(1);
-    }
-    while(fread(&std,sizeof(std),1,fp ) == 1){
-        if(strcmp(stname,std.name) == 0){
-            gotoxy(10,8);
-            printf("Name : %s",std.name);
-            gotoxy(10,9);
-            printf("Mobile Number : %s",std.mobile);
-            gotoxy(10,10);
-            printf("Roll No : %d",std.rollno);
-            gotoxy(10,11);
-            printf("Course : %s",std.course);
-            gotoxy(10,12);
-            printf("Branch : %s",std.branch);
-        }
-    }
-    fclose(fp);
-    gotoxy(10,16);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-}
-void modify()
-{
-    char stname[20];
-    FILE *fp;
-    struct student std;
-    system("cls");
-    gotoxy(10,3);
-    printf("<--:MODIFY RECORD:-->");
-    gotoxy(10,5);
-    printf("Enter name of student to modify: ");
-    fflush(stdin);
-    gets(stname);
-    fp = fopen("record.txt","rb+");
-    if(fp == NULL){
-        gotoxy(10,6);
-        printf("Error opening file");
-        exit(1);
-    }
-    rewind(fp);
-    fflush(stdin);
-    while(fread(&std,sizeof(std),1,fp) == 1)
-    {
-        if(strcmp(stname,std.name) == 0){
-            gotoxy(10,7);
-            printf("Enter name: ");
-            gets(std.name);
-            gotoxy(10,8);
-            printf("Enter mobile number : ");
-            gets(std.mobile);
-            gotoxy(10,9);
-            printf("Enter roll no : ");
-            scanf("%d",&std.rollno);
-            gotoxy(10,10);
-            printf("Enter Course : ");
-            fflush(stdin);
-            gets(std.course);
-            gotoxy(10,11);
-            printf("Enter Branch : ");
-            fflush(stdin);
-            gets(std.branch);
-            fseek(fp ,-sizeof(std),SEEK_CUR);
-            fwrite(&std,sizeof(std),1,fp);
-            break;
-        }
-    }
-    fclose(fp);
-    gotoxy(10,16);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-}
-void deleterec()
-{
-    char stname[20];
-    FILE *fp,*ft;
-    struct student std;
-    system("cls");
-    gotoxy(10,3);
-    printf("<--:DELETE RECORD:-->");
-    gotoxy(10,5);
-    printf("Enter name of student to delete record : ");
-    fflush(stdin);
-    gets(stname);
-    fp = fopen("record.txt","rb+");
-    if(fp == NULL){
-        gotoxy(10,6);
-        printf("Error opening file");
-        exit(1);
-    }
-    ft = fopen("temp.txt","wb+");
-    if(ft == NULL){
-        gotoxy(10,6);
-        printf("Error opening file");
-        exit(1);
-    }
-    while(fread(&std,sizeof(std),1,fp) == 1){
-        if(strcmp(stname,std.name)!=0)
-            fwrite(&std,sizeof(std),1,ft);
-    }
-    fclose(fp);
-    fclose(ft);
-    remove("record.txt");
-    rename("temp.txt","record.txt");
-    gotoxy(10,10);
-    printf("Press any key to continue.");
-    getch();
-    menu();
-}
-void gotoxy(int x,int y)
-{
-        COORD c;
-        c.X=x;
-        c.Y=y;
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),c);
+	students = createBinaryTree(compareInt);											// Create the AVL tree that will hold students
+	int result = 0;																		// Variable to hold result of main menu evaluation
+	printMainMenu();																	// Print main menu
+	while(1)																			// Start an infinite loop (unless user wants to exit, continue)
+	{
+		result = evaluateMainMenu();													// Get a result from main menu evaluation
+		if(result == -1)																// If the result was -1
+		{
+			continue;																	// User entered something wrong and an error is shown, continue
+		}
+		printf("\n=========== %s ===========\n", LANGUAGE_TITLE_RETURNTOMAINMENU);		// A correct selection was made and the process has been finished, return to main menu
+		printMainMenu();																// Print main menu again
+	}
+	return 0;
 }
